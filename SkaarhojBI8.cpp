@@ -32,28 +32,7 @@ void SkaarhojBI8::begin(int address, bool reverseButtons) {
 	_buttonStatusLastUp = 0;
 	_buttonStatusLastDown = 0;
 		
-		// Rate from 0-100 for color numbers: Off(0), On(1), Red(2), Green(3), Amber(4), Backlit(5), (off....)
-	_colorBalanceRed[0] = 0;
-	_colorBalanceRed[1] = 100;
-	_colorBalanceRed[2] = 100;
-	_colorBalanceRed[3] = 0;
-	_colorBalanceRed[4] = 100;
-	_colorBalanceRed[5] = 20;
-	_colorBalanceRed[6] = 0;
-	_colorBalanceRed[7] = 0;
-	_colorBalanceRed[8] = 0;
-	_colorBalanceRed[9] = 0;
-
-	_colorBalanceGreen[0] = 0;
-	_colorBalanceGreen[1] = 100;
-	_colorBalanceGreen[2] = 0;
-	_colorBalanceGreen[3] = 100;
-	_colorBalanceGreen[4] = 50;
-	_colorBalanceGreen[5] = 10;
-	_colorBalanceGreen[6] = 0;
-	_colorBalanceGreen[7] = 0;
-	_colorBalanceGreen[8] = 0;
-	_colorBalanceGreen[9] = 0;
+	setButtonType(0);	// Assuming NKK buttons as default
 	
 		// Used to track last used color in order to NOT write colors to buttons if they already have that color (writing same color subsequently will make the LED blink weirdly because each time a new timing scheme is randomly created in the PCA9685)
 	_buttonColorCache[0] = 255;
@@ -79,14 +58,24 @@ void SkaarhojBI8::begin(int address, bool reverseButtons) {
 	
 		// Inputs:
 	_buttonMux.init();
-	_buttonMux.pinMode(0,  INPUT);
-	_buttonMux.pinMode(1,  INPUT);
-	_buttonMux.pinMode(2,  INPUT);
-	_buttonMux.pinMode(3,  INPUT);
-	_buttonMux.pinMode(4,  INPUT);
-	_buttonMux.pinMode(5,  INPUT);
-	_buttonMux.pinMode(6,  INPUT);
-	_buttonMux.pinMode(7,  INPUT);
+
+		// Set everything as inputs with pull up resistors:
+	_buttonMux.internalPullupMask(65535);	// All has pull-up
+	_buttonMux.inputOutputMask(65535);	// All are inputs.
+	word buttonStatus = _buttonMux.digitalWordRead();	// Read out.
+	if ((buttonStatus & 1) == 0)  {	// Test value of GPB0
+		//Serial.println("BI8 >= v24-09-12: Switches pulls to low. Internal pull-ups enabled. BEST.");
+		//  GPIOchip.inputPolarityMask(65535);  //??
+	} else if ((buttonStatus >> 8) < 255) {	// Test if any of GPA0-7 are low (indicating pull-down resistors of 10K - or a button press!! Could be refined to test for more than one press)
+		//Serial.println("BI8 < v24-09-12: Switches pulls to high. External pull-ups enabled. WORKS...");
+		_buttonMux.internalPullupMask(0);	// In this case we don't need pull-up resistors...
+		setButtonType(1);	// Assuming E-switch buttons for old BI8 boards
+	} else {
+		//Serial.println("BI8 < v24-09-12: Switches pulls to high. NO pull-ups enabled!! Inputs must be configured as outputs! BAD!!!");
+		_buttonMux.inputOutputMask(0);	// We configure everything as outputs...
+		setButtonType(1);	// Assuming E-switch buttons for old BI8 boards
+	}
+
 
 		// Outputs:
 	_buttonLed.init();	
@@ -94,6 +83,57 @@ void SkaarhojBI8::begin(int address, bool reverseButtons) {
 }
 void SkaarhojBI8::usingB1alt()	{
 	_B1Alt=true;	
+}
+void SkaarhojBI8::setButtonType(uint8_t type)	{
+	// Rate from 0-100 for color numbers: Off(0), On(1), Red(2), Green(3), Amber(4), Backlit(5), (off....)
+	switch(type)	{
+		case 1: // LP 11 from e-switch
+		_colorBalanceRed[0] = 0;
+		_colorBalanceRed[1] = 100;
+		_colorBalanceRed[2] = 100;
+		_colorBalanceRed[3] = 0;
+		_colorBalanceRed[4] = 100;
+		_colorBalanceRed[5] = 20;
+		_colorBalanceRed[6] = 0;
+		_colorBalanceRed[7] = 0;
+		_colorBalanceRed[8] = 0;
+		_colorBalanceRed[9] = 0;
+
+		_colorBalanceGreen[0] = 0;
+		_colorBalanceGreen[1] = 100;
+		_colorBalanceGreen[2] = 0;
+		_colorBalanceGreen[3] = 100;
+		_colorBalanceGreen[4] = 50;
+		_colorBalanceGreen[5] = 10;
+		_colorBalanceGreen[6] = 0;
+		_colorBalanceGreen[7] = 0;
+		_colorBalanceGreen[8] = 0;
+		_colorBalanceGreen[9] = 0;		
+		break;
+		default: 	// NKK buttons
+		_colorBalanceRed[0] = 0;
+		_colorBalanceRed[1] = 70;
+		_colorBalanceRed[2] = 70;
+		_colorBalanceRed[3] = 0;
+		_colorBalanceRed[4] = 30;
+		_colorBalanceRed[5] = 5;
+		_colorBalanceRed[6] = 0;
+		_colorBalanceRed[7] = 0;
+		_colorBalanceRed[8] = 0;
+		_colorBalanceRed[9] = 0;
+
+		_colorBalanceGreen[0] = 0;
+		_colorBalanceGreen[1] = 70;
+		_colorBalanceGreen[2] = 0;
+		_colorBalanceGreen[3] = 70;
+		_colorBalanceGreen[4] = 30;
+		_colorBalanceGreen[5] = 5;
+		_colorBalanceGreen[6] = 0;
+		_colorBalanceGreen[7] = 0;
+		_colorBalanceGreen[8] = 0;
+		_colorBalanceGreen[9] = 0;		
+		break;
+	}
 }
 void SkaarhojBI8::setColorBalance(int colorNumber, int redPart, int greenPart) {
 	if (_validColorNumber(colorNumber) && _validPercentage(redPart) && _validPercentage(greenPart))	{

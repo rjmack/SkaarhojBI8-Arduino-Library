@@ -53,6 +53,7 @@ class SkaarhojBI8
 	SkaarhojBI8();
 	void begin(int address, bool reverseButtons);
 	void usingB1alt();
+	void setButtonType(uint8_t type);
 	void setColorBalance(int colorNumber, int redPart, int greenPart);
 	void setDefaultColor(int defaultColorNumber);
 	void setButtonColor(int buttonNumber, int colorNumber);
