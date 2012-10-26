@@ -64,14 +64,14 @@ void SkaarhojBI8::begin(int address, bool reverseButtons) {
 	_buttonMux.inputOutputMask(65535);	// All are inputs.
 	word buttonStatus = _buttonMux.digitalWordRead();	// Read out.
 	if ((buttonStatus & 1) == 0)  {	// Test value of GPB0
-		//Serial.println("BI8 >= v24-09-12: Switches pulls to low. Internal pull-ups enabled. BEST.");
+		// Serial.println("BI8 >= v24-09-12: Switches pulls to low. Internal pull-ups enabled. BEST.");
 		//  GPIOchip.inputPolarityMask(65535);  //??
 	} else if ((buttonStatus >> 8) < 255) {	// Test if any of GPA0-7 are low (indicating pull-down resistors of 10K - or a button press!! Could be refined to test for more than one press)
-		//Serial.println("BI8 < v24-09-12: Switches pulls to high. External pull-ups enabled. WORKS...");
+		// Serial.println("BI8 < v24-09-12: Switches pulls to high. External pull-ups enabled. WORKS...");
 		_buttonMux.internalPullupMask(0);	// In this case we don't need pull-up resistors...
 		setButtonType(1);	// Assuming E-switch buttons for old BI8 boards
 	} else {
-		//Serial.println("BI8 < v24-09-12: Switches pulls to high. NO pull-ups enabled!! Inputs must be configured as outputs! BAD!!!");
+		// Serial.println("BI8 < v24-09-12: Switches pulls to high. NO pull-ups enabled!! Inputs must be configured as outputs! BAD!!!");
 		_buttonMux.inputOutputMask(0);	// We configure everything as outputs...
 		setButtonType(1);	// Assuming E-switch buttons for old BI8 boards
 	}
