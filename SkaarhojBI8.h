@@ -48,18 +48,22 @@ class SkaarhojBI8
 	uint8_t _defaultColorNumber;
 	uint8_t _buttonColorCache[8];
 	bool _B1Alt;	
+	bool _debugMode;
+	bool _oldBI8;
 
   public:
 	SkaarhojBI8();
-	void begin(int address, bool reverseButtons);
+	bool begin(int address);
+	bool begin(int address, bool reverseButtons);
 	void usingB1alt();
+	void debugMode();
 	void setButtonType(uint8_t type);
 	void setColorBalance(int colorNumber, int redPart, int greenPart);
 	void setDefaultColor(int defaultColorNumber);
 	void setButtonColor(int buttonNumber, int colorNumber);
 	void setButtonColorsToDefault();
 	void testSequence();
-	void testSequence(int delayTime);
+	uint8_t testSequence(int delayTime);
 	
 	bool buttonUp(int buttonNumber);
 	bool buttonDown(int buttonNumber);

@@ -17,14 +17,20 @@
 #include "SkaarhojBI8.h"
 
 
-SkaarhojBI8::SkaarhojBI8(){}	// Empty constructor.
+SkaarhojBI8::SkaarhojBI8(){
+	_debugMode = false;
+	_oldBI8 = false;
+}	// Empty constructor.
 
-void SkaarhojBI8::begin(int address, bool reverseButtons) {
+bool SkaarhojBI8::begin(int address)	{
+	return begin(address, false);
+}
+bool SkaarhojBI8::begin(int address, bool reverseButtons) {
 	// NOTE: Wire.h should definitely be initialized at this point! (Wire.begin())
 	
 	
 	_boardAddress = (address & B11);	// 0-3
-	_reverseButtons = reverseButtons;	// If set, buttons on the PCB is mounted on the bottom (opposite side of the chips). This affects how the LEDs should be programmed. All button numbers are the same.	
+	_reverseButtons = reverseButtons;	// If set, buttons on the PCB is mounted on the bottom (opposite side of the chips). This affects how the LEDs should be programmed. All button numbers are the same. (OBSOLETE!)	
 	_B1Alt = false;	
 
 		// Initializing:
@@ -57,32 +63,40 @@ void SkaarhojBI8::begin(int address, bool reverseButtons) {
 	_buttonLed.begin((int)(B111000 | _boardAddress));
 	
 		// Inputs:
-	_buttonMux.init();
+	_buttonMux.inputPolarityMask(0);
+	bool isOnline = _buttonMux.init();
 
 		// Set everything as inputs with pull up resistors:
 	_buttonMux.internalPullupMask(65535);	// All has pull-up
 	_buttonMux.inputOutputMask(65535);	// All are inputs.
 	word buttonStatus = _buttonMux.digitalWordRead();	// Read out.
 	if ((buttonStatus & 1) == 0)  {	// Test value of GPB0
-		// Serial.println("BI8 >= v24-09-12: Switches pulls to low. Internal pull-ups enabled. BEST.");
-		//  GPIOchip.inputPolarityMask(65535);  //??
+		 if (_debugMode && isOnline) Serial.println(F("BI8 >= v24-09-12: Switches pulls to low. Internal pull-ups enabled. BEST."));
+		 _buttonMux.inputPolarityMask(65535);
 	} else if ((buttonStatus >> 8) < 255) {	// Test if any of GPA0-7 are low (indicating pull-down resistors of 10K - or a button press!! Could be refined to test for more than one press)
-		// Serial.println("BI8 < v24-09-12: Switches pulls to high. External pull-ups enabled. WORKS...");
+		 if (_debugMode && isOnline) Serial.println(F("BI8 < v24-09-12: Switches pulls to high. External pull-ups enabled. WORKS..."));
 		_buttonMux.internalPullupMask(0);	// In this case we don't need pull-up resistors...
 		setButtonType(1);	// Assuming E-switch buttons for old BI8 boards
+		_oldBI8 = true;
 	} else {
-		// Serial.println("BI8 < v24-09-12: Switches pulls to high. NO pull-ups enabled!! Inputs must be configured as outputs! BAD!!!");
+		 if (_debugMode && isOnline) Serial.println(F("BI8 < v24-09-12: Switches pulls to high. NO pull-ups enabled!! Inputs must be configured as outputs! BAD!!"));	// NEVER three exclamation marks! The AVR crashes with "Bootloader Huh?"... see http://forums.adafruit.com/viewtopic.php?f=25&t=21396
 		_buttonMux.inputOutputMask(0);	// We configure everything as outputs...
 		setButtonType(1);	// Assuming E-switch buttons for old BI8 boards
+		_oldBI8 = true;
 	}
 
 
 		// Outputs:
 	_buttonLed.init();	
 	setButtonColorsToDefault();
+	
+	return isOnline;
 }
 void SkaarhojBI8::usingB1alt()	{
 	_B1Alt=true;	
+}
+void SkaarhojBI8::debugMode()	{
+	_debugMode=true;	
 }
 void SkaarhojBI8::setButtonType(uint8_t type)	{
 	// Rate from 0-100 for color numbers: Off(0), On(1), Red(2), Green(3), Amber(4), Backlit(5), (off....)
@@ -153,16 +167,23 @@ void SkaarhojBI8::setButtonColorsToDefault() {
 	}
 }
 void SkaarhojBI8::testSequence() { testSequence(20); }
-void SkaarhojBI8::testSequence(int delayTime) {
+uint8_t SkaarhojBI8::testSequence(int delayTime) {
+  uint8_t bDown = 0;
 	// Test LEDS:
   for(int ii=0;ii<=9;ii++)  {
     for(int i=1;i<=8;i++)  {
       _writeButtonLed(i,ii);
+			// Test for button press and exit if so:
+	  bDown = buttonDownAll();
+	  if (bDown)	{
+		return bDown;
+	  }
       delay(delayTime);
     }
     delay(delayTime*3);
   }
 	setButtonColorsToDefault();
+	return 0;
 }
 
 
@@ -230,7 +251,7 @@ void SkaarhojBI8::_writeButtonLed(int buttonNumber, int color)  {
 	if (_validColorNumber(color) && _validButtonNumber(buttonNumber) && _buttonColorCache[(buttonNumber-1)] != color)		{
 		_buttonColorCache[(buttonNumber-1)] = color;
 		uint8_t isNormal = _reverseButtons ? 0 : 1;
-	    if(buttonNumber<=4 && !(buttonNumber==1 && _B1Alt))  {
+	    if((buttonNumber<=4 && !(buttonNumber==1 && _B1Alt)) || !_oldBI8)  {
 	      _buttonLed.setLEDDimmed((buttonNumber-1)*2+1*(1-isNormal),  _colorBalanceRed[color]);
 	      _buttonLed.setLEDDimmed((buttonNumber-1)*2+1*isNormal, _colorBalanceGreen[color]);
 	    } else {
