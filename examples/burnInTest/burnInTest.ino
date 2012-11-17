@@ -20,8 +20,8 @@
 
 // Setting up four boards, addresses 0-3 (onboard dip switch):
 SkaarhojBI8 boardArray[] = {
-  SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8()};
-bool boardArrayEnabled[4];
+  SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8(), SkaarhojBI8()};
+bool boardArrayEnabled[8];
 
 // no-cost stream operator as described at 
 // http://arduiniana.org/libraries/streaming/
@@ -44,7 +44,7 @@ void setup() {
   Wire.begin();
 
   // Set up each board, test if it exists (looking for MCP23017 chip).
-  for(uint8_t i=0;i<=3;i++)  {  
+  for(uint8_t i=0;i<=7;i++)  {  
     boardArray[i].debugMode();
     boardArrayEnabled[i] = boardArray[i].begin(i);
     Serial << F("Board ") << i << " is " << (boardArrayEnabled[i]?"present":"NOT present") << "\n";
@@ -57,7 +57,7 @@ void setup() {
 
 void loop() {
   // Run the LED test sequence for each board:
-  for(uint8_t i=0;i<=3;i++)  {  
+  for(uint8_t i=0;i<=7;i++)  {  
     if (boardArrayEnabled[i]) buttonPressSession(boardArray[i].testSequence(50), boardArray[i]);
   }
   delay(5000);

@@ -29,7 +29,7 @@ bool SkaarhojBI8::begin(int address, bool reverseButtons) {
 	// NOTE: Wire.h should definitely be initialized at this point! (Wire.begin())
 	
 	
-	_boardAddress = (address & B11);	// 0-3
+	_boardAddress = (address & B111);	// 0-7
 	_reverseButtons = reverseButtons;	// If set, buttons on the PCB is mounted on the bottom (opposite side of the chips). This affects how the LEDs should be programmed. All button numbers are the same. (OBSOLETE!)	
 	_B1Alt = false;	
 
@@ -55,7 +55,7 @@ bool SkaarhojBI8::begin(int address, bool reverseButtons) {
 		// Create object for reading button presses
 	MCP23017 buttonMux;
 	_buttonMux = buttonMux;
-	_buttonMux.begin((int)(B00 | _boardAddress));
+	_buttonMux.begin((int)_boardAddress);
 
 		// Create object for writing LED levels:
 	PCA9685 buttonLed;
@@ -69,7 +69,9 @@ bool SkaarhojBI8::begin(int address, bool reverseButtons) {
 		// Set everything as inputs with pull up resistors:
 	_buttonMux.internalPullupMask(65535);	// All has pull-up
 	_buttonMux.inputOutputMask(65535);	// All are inputs.
+//	delay(10);
 	word buttonStatus = _buttonMux.digitalWordRead();	// Read out.
+//	Serial.println(buttonStatus, BIN);
 	if ((buttonStatus & 1) == 0)  {	// Test value of GPB0
 		 if (_debugMode && isOnline) Serial.println(F("BI8 >= v24-09-12: Switches pulls to low. Internal pull-ups enabled. BEST."));
 		 _buttonMux.inputPolarityMask(65535);
