@@ -39,39 +39,45 @@ class SkaarhojBI8
 	bool _reverseButtons;
 	MCP23017 _buttonMux;
 	PCA9685 _buttonLed;
-	uint8_t _buttonStatus;
-	uint8_t _buttonStatusLastUp;
-	uint8_t _buttonStatusLastDown;
+	PCA9685 _buttonLed2;
+	uint16_t _buttonStatus;
+	uint16_t _buttonStatusLastUp;
+	uint16_t _buttonStatusLastDown;
 
 	uint8_t _colorBalanceRed[10];	
 	uint8_t _colorBalanceGreen[10];
+	uint8_t _colorBalanceBlue[10];
 	uint8_t _defaultColorNumber;
-	uint8_t _buttonColorCache[8];
+	uint8_t _buttonColorCache[10];	// 10 buttons
 	bool _B1Alt;	
 	bool _debugMode;
 	bool _oldBI8;
+	bool _RGBbuttons;
 
   public:
 	SkaarhojBI8();
 	bool begin(int address);
 	bool begin(int address, bool reverseButtons);
+	bool isOnline();
+	bool isRGBboard();
 	void usingB1alt();
 	void debugMode();
 	void setButtonType(uint8_t type);
 	void setColorBalance(int colorNumber, int redPart, int greenPart);
+	void setColorBalanceRGB(int colorNumber, int redPart, int greenPart, int bluePart);
 	void setDefaultColor(int defaultColorNumber);
 	void setButtonColor(int buttonNumber, int colorNumber);
 	void setButtonColorsToDefault();
 	void testSequence();
-	uint8_t testSequence(int delayTime);
+	uint16_t testSequence(int delayTime);
 	
 	bool buttonUp(int buttonNumber);
 	bool buttonDown(int buttonNumber);
 	bool buttonIsPressed(int buttonNumber);
-	uint8_t buttonUpAll();
-	uint8_t buttonDownAll();
-	uint8_t buttonIsPressedAll();
-	bool isButtonIn(int buttonNumber, uint8_t allButtonsState);
+	uint16_t buttonUpAll();
+	uint16_t buttonDownAll();
+	uint16_t buttonIsPressedAll();
+	bool isButtonIn(int buttonNumber, uint16_t allButtonsState);
 	
 	
   private:

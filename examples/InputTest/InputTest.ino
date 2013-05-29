@@ -29,16 +29,21 @@ void setup() {
   board.testSequence();  // Runs LED test sequence
 }
 
-uint8_t buttonColorTracking[] = {0,0,0,0,0,0,0,0};
+uint8_t buttonColorTracking[] = {0,0,0,0,0,0,0,0,0,0};
 
 void loop() {
-  for(int i=1;i<=8;i++)  {
+  for(int i=1;i<=10;i++)  {
     if (board.buttonDown(i))  {
       Serial.print("Button #");
       Serial.print(i);
-      Serial.println(" was pressed down");
+      Serial.print(" was pressed down");
 
-      board.setButtonColor(i, nextButtonColor(i));
+      uint8_t nextColor = nextButtonColor(i);
+      board.setButtonColor(i, nextColor);
+
+      Serial.print(" - new color index: ");
+      Serial.print(nextColor);
+      Serial.println();
     }  
     if (board.buttonUp(i))  {
       Serial.print("Button #");
@@ -51,7 +56,7 @@ void loop() {
 
 uint8_t nextButtonColor(int i) {
   buttonColorTracking[i-1]++;
-  if (buttonColorTracking[i-1]>5)  {
+  if (buttonColorTracking[i-1]> (board.isRGBboard()?9:4))  {
     buttonColorTracking[i-1]=0;
   }
   return buttonColorTracking[i-1];
