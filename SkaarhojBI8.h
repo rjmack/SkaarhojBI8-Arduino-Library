@@ -37,6 +37,9 @@ class SkaarhojBI8
   private:
 	uint8_t _boardAddress;
 	bool _reverseButtons;
+	bool _extendedBicolor;
+	uint8_t _numberOfButtons;
+	
 	MCP23017 _buttonMux;
 	PCA9685 _buttonLed;
 	PCA9685 _buttonLed2;
@@ -44,11 +47,16 @@ class SkaarhojBI8
 	uint16_t _buttonStatusLastUp;
 	uint16_t _buttonStatusLastDown;
 
+	uint16_t _lastButtonStatus;
+	uint16_t _lastButtonReleased;
+	unsigned long _inputChangeTime;
+	bool _inputChangeTimeActive;
+
 	uint8_t _colorBalanceRed[10];	
 	uint8_t _colorBalanceGreen[10];
 	uint8_t _colorBalanceBlue[10];
 	uint8_t _defaultColorNumber;
-	uint8_t _buttonColorCache[10];	// 10 buttons
+	uint8_t _buttonColorCache[16];	// 16 buttons
 	bool _B1Alt;	
 	bool _debugMode;
 	bool _oldBI8;
@@ -56,35 +64,38 @@ class SkaarhojBI8
 
   public:
 	SkaarhojBI8();
-	bool begin(int address);
-	bool begin(int address, bool reverseButtons);
+	bool begin(uint8_t address);
+	bool begin(uint8_t address, bool reverseButtons);
+	bool begin(uint8_t address, bool reverseButtons, bool extendedBicolor);
 	bool isOnline();
 	bool isRGBboard();
 	void usingB1alt();
 	void debugMode();
 	void setButtonType(uint8_t type);
-	void setColorBalance(int colorNumber, int redPart, int greenPart);
-	void setColorBalanceRGB(int colorNumber, int redPart, int greenPart, int bluePart);
-	void setDefaultColor(int defaultColorNumber);
-	void setButtonColor(int buttonNumber, int colorNumber);
+	void setColorBalance(uint8_t colorNumber, uint8_t redPart, uint8_t greenPart);
+	void setColorBalanceRGB(uint8_t colorNumber, uint8_t redPart, uint8_t greenPart, uint8_t bluePart);
+	void setDefaultColor(uint8_t defaultColorNumber);
+	void setButtonColor(uint8_t buttonNumber, uint8_t colorNumber);
 	void setButtonColorsToDefault();
 	void testSequence();
-	uint16_t testSequence(int delayTime);
+	uint16_t testSequence(uint16_t delayTime);
 	
-	bool buttonUp(int buttonNumber);
-	bool buttonDown(int buttonNumber);
-	bool buttonIsPressed(int buttonNumber);
+	bool buttonUp(uint8_t buttonNumber);
+	bool buttonDown(uint8_t buttonNumber);
+	bool buttonIsPressed(uint8_t buttonNumber);
+	bool buttonIsHeldFor(uint8_t buttonNumber, uint16_t timeout);
+	bool buttonIsReleasedAgo(uint8_t buttonNumber, uint16_t timeout);
 	uint16_t buttonUpAll();
 	uint16_t buttonDownAll();
 	uint16_t buttonIsPressedAll();
-	bool isButtonIn(int buttonNumber, uint16_t allButtonsState);
+	bool isButtonIn(uint8_t buttonNumber, uint16_t allButtonsState);
 	
 	
   private:
-	void _writeButtonLed(int buttonNumber, int color);
+	void _writeButtonLed(uint8_t buttonNumber, uint8_t color);
 	void _readButtonStatus();
-	bool _validButtonNumber(int buttonNumber);
-	bool _validColorNumber(int colorNumber);
-	bool _validPercentage(int percentage);
+	bool _validButtonNumber(uint8_t buttonNumber);
+	bool _validColorNumber(uint8_t colorNumber);
+	bool _validPercentage(uint8_t percentage);
 };
 #endif 

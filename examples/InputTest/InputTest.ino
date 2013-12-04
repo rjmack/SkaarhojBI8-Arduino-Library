@@ -25,14 +25,14 @@ void setup() {
   Wire.begin(); 
   
   // Set up the board:
-  board.begin(0,false);  // Address 0, dip-switch on board is OFF for both 1 and 2
+  board.begin(0,false,true);  // Address 0, dip-switch on board is OFF for both 1 and 2
   board.testSequence();  // Runs LED test sequence
 }
 
-uint8_t buttonColorTracking[] = {0,0,0,0,0,0,0,0,0,0};
+uint8_t buttonColorTracking[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 void loop() {
-  for(int i=1;i<=10;i++)  {
+  for(int i=1;i<=16;i++)  {
     if (board.buttonDown(i))  {
       Serial.print("Button #");
       Serial.print(i);
@@ -51,6 +51,20 @@ void loop() {
       Serial.println(" was released");
     }  
   }  
+  
+  if (board.buttonIsHeldFor(1, 1000))  {
+    Serial.println("1 was held");
+  }
+  if (board.buttonIsHeldFor(5, 3000))  {
+    Serial.println("5 was held");
+  }
+  if (board.buttonIsReleasedAgo(1, 1000))  {
+    Serial.println("1 was released");
+  }
+  if (board.buttonIsReleasedAgo(2, 2000))  {
+    Serial.println("2 was released");
+  }
+ 
 }
 
 
